@@ -13,6 +13,8 @@ describe 'elkstack::cluster' do
       node.set['rackspace']['cloud_credentials']['username'] = 'joe-test'
       node.set['rackspace']['cloud_credentials']['api_key'] = '123abc'
       node.set['filesystem'] = []
+      node.set['elkstack']['config']['kibana']['username'] = 'test'
+      node.set['elkstack']['config']['kibana']['password'] = 'insecure'
     end.converge(described_recipe, 'platformstack::monitors')
     # converge WITH platformstack so we can test our templates are created
   end
@@ -65,8 +67,8 @@ describe 'elkstack::cluster' do
 
   it 'creates htpassword and htpassword.curl to protect kibana' do
     expect(chef_run).to create_directory('/etc/nginx/ssl')
-    expect(chef_run).to add_htpasswd('/etc/nginx/htpassword')
-    expect(chef_run).to create_file_if_missing('/etc/nginx/htpassword.curl')
+    expect(chef_run).to add_htpasswd('/etc/nginx/htpassword').with({:user => 'test', :password => 'insecure'})
+    expect(chef_run).to create_file_if_missing('/etc/nginx/htpassword.curl').with_content("user = \"test:insecure\"")
   end
 
   it 'installs and configures kibana and nginx' do
